@@ -1,0 +1,50 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 29
+    defaultConfig {
+        applicationId "com.huatu.tiger.theagedlauncher"
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+    signingConfigs {
+        debug {
+            keyAlias 'momdesktop'
+            keyPassword 'huhu1234'
+            storeFile file('/Users/huatu/Documents/GitHub/huatu/theAgedLauncher/app/key.jks')
+            storePassword 'huhu1234'
+        }
+        release {
+            keyAlias 'momdesktop'
+            keyPassword 'huhu1234'
+            storeFile file('/Users/huatu/Documents/GitHub/huatu/theAgedLauncher/app/key.jks')
+            storePassword 'huhu1234'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation "androidx.room:room-runtime:${ROOM_VERSION}"
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation "androidx.dynamicanimation:dynamicanimation:${ANDROID_X_VERSION}"
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    api 'io.reactivex.rxjava2:rxjava:2.0.1'
+    api 'io.reactivex.rxjava2:rxandroid:2.0.1'
+}
