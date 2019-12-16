@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">简桌面</string>
+    <string-array name="defalt_apps">
+        <item>电话</item>
+        <item>联系人</item>
+        <item>微信</item>
+        <item>设置</item>
+        <item>相机</item>
+    </string-array>
+    <string-array name="default_name">
+        <item>com.android.contacts.activities.PeopleActivity</item>
+        <item>com.android.contacts.activities.DialtactsActivity</item>
+        <item>com.android.settings.HWSettings</item>
+        <item>com.tencent.mm.ui.LauncherUI</item>
+    </string-array>
+    <string-array name="default_packagename">
+        <item>com.android.contacts</item>
+        <item>com.android.settings</item>
+        <item>com.tencent.mm</item>
+        <item>com.sina.weibo</item>
+        <item>com.tencent.mobileqq</item>
+        <item>com.android.mms</item>
+    </string-array>
 </resources>

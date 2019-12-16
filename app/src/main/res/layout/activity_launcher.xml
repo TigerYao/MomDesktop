@@ -4,9 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/workspace"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
+
+
+    <com.huatu.tiger.theagedlauncher.view.SimpleCircleIndicator
+        android:id="@+id/indictor_view"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_gravity="center|bottom" />
 
 </com.huatu.tiger.theagedlauncher.view.InsettableFrameLayout>

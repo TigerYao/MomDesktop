@@ -24,13 +24,13 @@ android {
         debug {
             keyAlias 'momdesktop'
             keyPassword 'huhu1234'
-            storeFile file('/Users/huatu/Documents/GitHub/huatu/theAgedLauncher/app/key.jks')
+            storeFile file('key.jks')
             storePassword 'huhu1234'
         }
         release {
             keyAlias 'momdesktop'
             keyPassword 'huhu1234'
-            storeFile file('/Users/huatu/Documents/GitHub/huatu/theAgedLauncher/app/key.jks')
+            storeFile file('key.jks')
             storePassword 'huhu1234'
         }
     }

@@ -4,4 +4,8 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="forcolor">#66c3c3c3</color>
+    <color name="gray_e2">#66E2E2E2</color>
+    <color name="gray_e2_f">#E2E2E2</color>
+    <color name="presale_red">#66FF3300</color>
+    <color name="presale_not">#F50000</color>
 </resources>
