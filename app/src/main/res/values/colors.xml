@@ -8,4 +8,6 @@
     <color name="gray_e2_f">#E2E2E2</color>
     <color name="presale_red">#66FF3300</color>
     <color name="presale_not">#F50000</color>
+    <color name="white">#fff</color>
+    <color name="black">#000</color>
 </resources>

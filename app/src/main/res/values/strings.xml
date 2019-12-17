@@ -1,11 +1,19 @@
 <resources>
     <string name="app_name">简桌面</string>
+    <string name="all_app">全部应用</string>
+    <string name="add_app">添加应用</string>
+    <string name="add_contact">添加联系人</string>
     <string-array name="defalt_apps">
         <item>电话</item>
         <item>联系人</item>
         <item>微信</item>
         <item>设置</item>
         <item>相机</item>
+        <item>微博</item>
+        <item>QQ</item>
+        <item>抖音</item>
+        <item>快手</item>
+        <item>头条</item>
     </string-array>
     <string-array name="default_name">
         <item>com.android.contacts.activities.PeopleActivity</item>

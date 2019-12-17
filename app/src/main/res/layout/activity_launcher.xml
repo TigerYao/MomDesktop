@@ -19,4 +19,9 @@
         android:layout_height="50dp"
         android:layout_gravity="center|bottom" />
 
+    <FrameLayout
+        android:id="@+id/fragment_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 </com.huatu.tiger.theagedlauncher.view.InsettableFrameLayout>
