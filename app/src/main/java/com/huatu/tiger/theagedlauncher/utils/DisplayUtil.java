@@ -1,14 +1,24 @@
 package com.huatu.tiger.theagedlauncher.utils;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.huatu.tiger.theagedlauncher.LauncherActivity;
 
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 /**
@@ -20,20 +30,13 @@ public class DisplayUtil {
     private static int screenWidth = 0;
     private static int screenHeight = 0;
     private static int navigationBarHeight;
-    public static int gap = 0;
     public static int realWidh = 0;
     public static int realHeight = 0;
 
-    public static void computeWidth(Context ctx){
-        if(realWidh == 0) {
-            realWidh = ((DisplayUtil.getScreenWidth(ctx)) / 20);
-            Log.i("TAG", "realWidh..."+ realWidh);
-            realWidh = ((DisplayUtil.getScreenWidth(ctx) -  realWidh * 3) / 16);
-            Log.i("TAG", "realWidh..re..."+ realWidh);
-            realHeight = ((int) Math.floor((DisplayUtil.getScreenHeight(ctx) - 55) / 11));
-            Log.i("TAG", DisplayUtil.getScreenWidth(ctx) + "...realWidh..re..."+ realWidh * 18);
-            gap = Math.abs(DisplayUtil.getScreenWidth(ctx) - realWidh * 18 - 40); //- realWidh * 2;
-            Log.i("TAG","gap..."+gap);
+    public static void computeWidth(Context ctx) {
+        if (realWidh == 0) {
+            realHeight = (getScreenHeight(ctx) - (int) dp2px(80, ctx)) / 3;
+            realWidh = getScreenWidth(ctx) / 2;
         }
     }
 
@@ -119,9 +122,11 @@ public class DisplayUtil {
         }
         return navigationBarHeight;
     }
+
     static String strMacAddr = null;
+
     public static String getMacAddress() {
-        if(!TextUtils.isEmpty(strMacAddr))
+        if (!TextUtils.isEmpty(strMacAddr))
             return strMacAddr;
         try {
             // 获得IpD地址
@@ -141,6 +146,7 @@ public class DisplayUtil {
         }
         return strMacAddr;
     }
+
     /**
      * 获取移动设备本地IP
      *
@@ -174,6 +180,28 @@ public class DisplayUtil {
             e.printStackTrace();
         }
         return ip;
+    }
+
+    /**
+     * 动态权限
+     */
+    public static void addPermissByPermissionList(Activity activity, String[] permissions, int request) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {   //Android 6.0开始的动态权限，这里进行版本判断
+            ArrayList<String> mPermissionList = new ArrayList<>();
+            for (int i = 0; i < permissions.length; i++) {
+                if (ContextCompat.checkSelfPermission(activity, permissions[i])
+                        != PackageManager.PERMISSION_GRANTED) {
+                    mPermissionList.add(permissions[i]);
+                }
+            }
+            if (mPermissionList.isEmpty()) {  //非初次进入App且已授权
+                Toast.makeText(activity, "已授权", Toast.LENGTH_SHORT).show();
+            } else {
+                //请求权限方法
+                String[] permissionsNew = mPermissionList.toArray(new String[mPermissionList.size()]);//将List转为数组
+                ActivityCompat.requestPermissions(activity, permissionsNew, request); //这个触发下面onRequestPermissionsResult这个回调
+            }
+        }
     }
 
 }

@@ -45,6 +45,10 @@ public abstract class SimpleCommonRVAdapter<T> extends RecyclerView.Adapter {
         notifyDataSetChanged();
     }
 
+    public List<T> getData() {
+        return mData;
+    }
+
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new SimpleViewHolder(LayoutInflater.from(mContext).inflate(getLayoutId(viewType), null), getItemCount());

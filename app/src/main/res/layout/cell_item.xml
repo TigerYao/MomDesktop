@@ -11,6 +11,7 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         android:gravity="center"
+        android:elevation="5dp"
         android:background="@drawable/round_shape_gray"
         android:padding="5dp"
         android:orientation="vertical">

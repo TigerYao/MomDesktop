@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.huatu.tiger.theagedlauncher">
+
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <!--&lt;!&ndash;用于进行网络定位&ndash;&gt;-->
     <!--<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>-->
     <!--&lt;!&ndash;用于访问GPS定位&ndash;&gt;-->
@@ -20,13 +22,17 @@
     <!--<uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>-->
     <!--<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"></uses-permission>-->
     <application
+        android:name=".LauncherApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
-        <activity android:name=".LauncherActivity">
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".LauncherActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

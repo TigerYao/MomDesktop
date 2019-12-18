@@ -1,5 +1,6 @@
 package com.huatu.tiger.theagedlauncher.utils;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -7,8 +8,16 @@ import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.DrawableWrapper;
+import android.net.Uri;
 import android.os.Build;
 import android.os.UserManager;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import androidx.core.content.ContextCompat;
@@ -19,25 +28,27 @@ import com.huatu.tiger.theagedlauncher.bean.AppDatabase;
 import com.huatu.tiger.theagedlauncher.bean.AppInfo;
 import com.huatu.tiger.theagedlauncher.bean.AppInfoDao;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 public class LoadAppUtils {
     public static final int APP_TYPE = 0;
     public static final int DEFAULT_APP_TYPE = 1;
     public static final int ALL_APP_TYPE = 2;
     public static final int ALL_CONTACT_TYPE = 3;
-    public static final int ADD_TYPE = 4;
-    public static final int DEFAULT_SEC_APP_TYPE = 4;
+    public static final int ADD_APP_TYPE = 4;
+    public static final int ADD_CONTACT_TYPE = 5;
 
     private static LoadAppUtils mInstance = null;
     private Context mCtx;
     private List<AppInfo> mInfos;
-    private List<AppInfo> mDefaltInfos;
+    public List<AppInfo> mDefaltInfos;
     private AppInfoDao mAppDao;
     private List<String> defaltApps;
     private PackageManager mPackageManager;
@@ -56,36 +67,22 @@ public class LoadAppUtils {
         return mInstance;
     }
 
-    public List<AppInfo> getContactList() {
-        List<AppInfo> contacts = mAppDao.loadAllAppByType(ALL_CONTACT_TYPE);
-        if (contacts == null || contacts.size() < 6) {
-            contacts = new ArrayList<>();
-            int counts = (6 - contacts.size());
-            for (int i = 0; i < counts; i++) {
-                AppInfo appInfo = new AppInfo();
-                appInfo.icon = ContextCompat.getDrawable(mCtx, R.mipmap.add_icon);
-                appInfo.type = ALL_CONTACT_TYPE;
-                appInfo.label = mCtx.getString(R.string.add_contact);
-                contacts.add(appInfo);
-            }
-        } else {
-            AppInfo appInfo = new AppInfo();
-            appInfo.icon = ContextCompat.getDrawable(mCtx, R.mipmap.add_icon);
-            appInfo.type = ALL_CONTACT_TYPE;
-            appInfo.label = mCtx.getString(R.string.add_contact);
-            contacts.add(appInfo);
-        }
+    public Observable<List<AppInfo>> getAllNewApp() {
+        mInfos = null;
+        return getAllApps();
+    }
 
-        return contacts;
+    public List<AppInfo> loadNewDefault() {
+        mDefaltInfos = null;
+        return getDefaultApps();
     }
 
     public Observable<List<AppInfo>> getAllApps() {
         return Observable.just(mCtx.getPackageManager()).map(new Function<PackageManager, List<AppInfo>>() {
             @Override
             public List<AppInfo> apply(PackageManager packageManager) throws Exception {
-//                mInfos = mAppDao.loadAllApp();
-//                if (mInfos != null || mInfos.size() > 0)
-//                    return mInfos;
+                if (mInfos != null && mInfos.size() > 0)
+                    return mInfos;
                 mInfos = new ArrayList<>();
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
                     LauncherApps launcherApps = (LauncherApps) mCtx.getSystemService(Context.LAUNCHER_APPS_SERVICE);
@@ -119,7 +116,7 @@ public class LoadAppUtils {
 
                 return mInfos;
             }
-        });
+        }).subscribeOn(Schedulers.io());
     }
 
     public List<AppInfo> getDefaultApps() {
@@ -151,6 +148,7 @@ public class LoadAppUtils {
                     }
                     if (mDefaltInfos.size() == 4) {
                         AppInfo appInfo = new AppInfo();
+                        appInfo.packageName = "all_app";
                         appInfo.label = mCtx.getString(R.string.all_app);
                         appInfo.isSystem = false;
                         appInfo.type = ALL_APP_TYPE;
@@ -183,6 +181,7 @@ public class LoadAppUtils {
                     }
                     if (mDefaltInfos.size() == 4) {
                         AppInfo appInfo = new AppInfo();
+                        appInfo.packageName = "all_app";
                         appInfo.label = mCtx.getString(R.string.all_app);
                         appInfo.isSystem = false;
                         appInfo.type = ALL_APP_TYPE;
@@ -198,9 +197,85 @@ public class LoadAppUtils {
         AppInfo appInfo = new AppInfo();
         appInfo.label = mCtx.getString(R.string.add_app);
         appInfo.isSystem = false;
-        appInfo.type = ADD_TYPE;
+        appInfo.type = ADD_APP_TYPE;
+        appInfo.packageName = "all_app";
         appInfo.icon = mCtx.getResources().getDrawable(R.mipmap.add_icon);
         mDefaltInfos.add(appInfo);
         return mDefaltInfos;
+    }
+
+    public AppInfoDao getAppDao() {
+        return mAppDao;
+    }
+
+    //调用并获取联系人信息
+    public List<AppInfo> getContactList() {
+        List<AppInfo> contacts = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = mCtx.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null, null, null, null);
+            if (cursor != null) {
+                Log.e("Launcherss", "...." + cursor.getCount());
+                while (cursor.moveToNext()) {
+                    String displayName = cursor.getString(cursor.getColumnIndex(
+                            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    String number = cursor.getString(cursor.getColumnIndex(
+                            ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    int contactId = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+                    AppInfo info = new AppInfo();
+                    info.packageName = number;
+                    info.appName = displayName;
+                    info.label = displayName;
+                    info.type = ALL_CONTACT_TYPE;
+                    info.icon = getContactsIcon(contactId);//BitmapDrawable.createFromStream();
+                    if(!contacts.contains(info))
+                        contacts.add(info);
+                    Log.e("Launcherss", "...." + "...." + contactId + "..." + number);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        AppInfo appInfo = new AppInfo();
+        appInfo.packageName = "all_person";
+        appInfo.icon = ContextCompat.getDrawable(mCtx, R.mipmap.add_icon);
+        appInfo.type = ADD_CONTACT_TYPE;
+        appInfo.label = mCtx.getString(R.string.add_contact);
+        contacts.add(appInfo);
+        return contacts;
+//        return Observable.just(1).map(new Function<Integer, List<AppInfo>>() {
+//            @Override
+//            public List<AppInfo> apply(Integer integer) throws Exception {
+//
+//            }
+//        }).subscribeOn(Schedulers.io());
+    }
+
+
+    public Drawable getContactsIcon(int contactsId) {
+        Bitmap bitmap = null;
+        try {
+            // 获取内容解析者
+            ContentResolver contentResolver = mCtx.getContentResolver();
+
+            // 查头像要传的uri 参1 baseuri 参2 要拼接的部分
+            Uri contactUri = Uri.withAppendedPath(
+                    ContactsContract.Contacts.CONTENT_URI, contactsId + "");
+            Log.e("Launcherss", "...." + "...." + contactUri.toString());
+            //获取联系人头像的流
+            InputStream iconIs = ContactsContract.Contacts
+                    .openContactPhotoInputStream(contentResolver, contactUri);
+            //把流生成bitmap对象
+//         Drawable drawable = Drawable.createFromStream(iconIs, null);
+            bitmap = iconIs == null ? null : BitmapFactory.decodeStream(iconIs);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return bitmap == null ? ContextCompat.getDrawable(mCtx, R.mipmap.girl_icon) : new BitmapDrawable(bitmap);
     }
 }

@@ -1,9 +1,13 @@
 package com.huatu.tiger.theagedlauncher;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import android.util.Log;
@@ -15,6 +19,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
@@ -48,8 +55,9 @@ public class LauncherActivity extends BaseActivity {
     RecyclerView mRecyclerView;
     SimpleCircleIndicator mIndicatorView;
     LinearLayoutManager linearLayoutManager;
-    int height, width;
-    TextView mTimeTv,mDateTv;
+    TextView mTimeTv, mDateTv;
+    AllAppFragment allAppFragment;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
@@ -70,51 +78,73 @@ public class LauncherActivity extends BaseActivity {
                 mIndicatorView.onPageScrolled(position, 0.0f, dx);
             }
         });
+        DisplayUtil.addPermissByPermissionList(this, new String[]{"android.permission.READ_CONTACTS"}, 1001);
+        DisplayUtil.computeWidth(this);
         loadApps();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        openLocal();
+        register();
+        LoadAppUtils.getInstance(this).getAllNewApp().subscribe();
     }
 
     @Override
     public void onBackPressed() {
-        
+        List<Fragment> fragmentList = getSupportFragmentManager().getFragments();
+        if (fragmentList == null || fragmentList.isEmpty())
+            return;
+        for (Fragment fragment : fragmentList) {
+            getSupportFragmentManager().beginTransaction().remove(fragment).commitNow();
+        }
     }
 
     int middleIndex = 0;
 
     private void loadApps() {
-        List<AppInfo> appInfos = LoadAppUtils.getInstance(this).getDefaultApps();
-
-        Observable.just(appInfos).map(new Function<List<AppInfo>, Map<Integer, List<AppInfo>>>() {
+        List<View> views = new ArrayList<>();
+        Observable.just(1).map(new Function<Integer, Map<String, List<AppInfo>>>() {
             @Override
-            public Map<Integer, List<AppInfo>> apply(List<AppInfo> appInfos) throws Exception {
-                Map<Integer, List<AppInfo>> appList = new HashMap<>();
-                int index = 0;
-                for (AppInfo info : appInfos) {
-                    List<AppInfo> infos = appList.get(index);
+            public Map<String, List<AppInfo>> apply(Integer integer) throws Exception {
+                Map<String, List<AppInfo>> appList = new HashMap<>();
+                List<AppInfo> contactList = LoadAppUtils.getInstance(getBaseContext()).getContactList();
+                int index = middleIndex = (int)Math.floor(contactList.size()/6);
+                for (AppInfo info : contactList) {
+//                    AppInfo info = contactList.get(position);
+                    List<AppInfo> infos = appList.get(index+"");
                     if (infos == null) {
                         infos = new ArrayList<>();
                     }
                     infos.add(info);
-                    appList.put(index, infos);
-                    if (index == middleIndex && infos.size() >= 4) {
-                        index += 4;
-                    } else if (infos.size() >= 6)
-                        index += 6;
+                    appList.put(index + "", infos);
+                    if (infos.size() >= 6) {
+                        index -= 1;
+                        Log.d("Launcherss", "-ccc-->" + index);
+//                        break;
+                    }
                 }
+                middleIndex += 1;
+                index = middleIndex;
+                List<AppInfo> appInfos = LoadAppUtils.getInstance(getBaseContext()).getDefaultApps();
+                for (AppInfo info : appInfos) {
+                    List<AppInfo> infos = appList.get(index+"");
+                    if (infos == null) {
+                        infos = new ArrayList<>();
+                    }
+                    infos.add(info);
+                    appList.put(index + "", infos);
+                    if (index == middleIndex && infos.size() >= 4) {
+                        index += 1;
+                        Log.d("Launcherss", "4--->" + index);
+                    } else if (infos.size() >= 6) {
+                        index += 1;
+                        Log.d("Launcherss", "6--->" + index);
+                    }
+                }
+                Log.d("Launcherss", "map--->" + appList.toString());
                 return appList;
             }
-        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).map(new Function<Map<Integer, List<AppInfo>>, List<View>>() {
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).map(new Function<Map<String, List<AppInfo>>, List<View>>() {
             @Override
-            public List<View> apply(Map<Integer, List<AppInfo>> integerListMap) throws Exception {
-                List<View> views = new ArrayList<>();
-                views.add(createContactList());
-                for (Integer index : integerListMap.keySet()) {
-                    views.add(createList(integerListMap.get(index), index == middleIndex));
+            public List<View> apply(Map<String, List<AppInfo>> integerListMap) throws Exception {
+                for (String index : integerListMap.keySet()) {
+                    views.add(createList(integerListMap.get(index)));
                 }
                 mIndicatorView.setPageNum(views.size());
                 return views;
@@ -135,54 +165,21 @@ public class LauncherActivity extends BaseActivity {
                         ((ViewGroup) holder.itemView).addView(item);
                     }
                 });
-                mRecyclerView.scrollToPosition(1);
+                mRecyclerView.scrollToPosition(middleIndex);
             }
         });
     }
 
-
-    private View createContactList() {
-        List<AppInfo> contactsList = LoadAppUtils.getInstance(this).getContactList();
-        if (height == 0)
-            height = (DisplayUtil.getScreenHeight(LauncherActivity.this) - (int) DisplayUtil.dp2px(80, this)) / 3;
-        if (width == 0)
-            width = DisplayUtil.getScreenWidth(LauncherActivity.this) / 2;
-
-        View rootView = getLayoutInflater().inflate(R.layout.cell_layout, null);
-        RecyclerView recyclerView = rootView.findViewById(R.id.cell_list);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
-        recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerView.setAdapter(new SimpleCommonRVAdapter<AppInfo>(contactsList, R.layout.cell_item, this) {
-            @Override
-            public void convert(SimpleViewHolder holder, AppInfo item, int position) {
-                holder.setText(R.id.name, item.label);
-                holder.setImageResource(R.id.icon, item.icon);
-                holder.itemView.setLayoutParams(new ViewGroup.LayoutParams(width, height));
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                    }
-                });
-            }
-        });
-        return rootView;
-    }
-
-    private View createList(List<AppInfo> appInfos, boolean isShowExpand) {
-        if (height == 0)
-            height = (DisplayUtil.getScreenHeight(LauncherActivity.this) - (int) DisplayUtil.dp2px(80, this)) / 3;
-        if (width == 0)
-            width = DisplayUtil.getScreenWidth(LauncherActivity.this) / 2;
+    private View createList(List<AppInfo> appInfos) {
         View rootView = null;
+        boolean isShowExpand = appInfos.size() == 4;
         if (isShowExpand) {
             rootView = getLayoutInflater().inflate(R.layout.app_widget_layout, null);
             View topView = rootView.findViewById(R.id.top);
             mTimeTv = rootView.findViewById(R.id.time_tv);
             mDateTv = rootView.findViewById(R.id.date_tv);
-            topView.getLayoutParams().height = height - (int) DisplayUtil.dp2px(20, LauncherActivity.this);
+            topView.getLayoutParams().height = DisplayUtil.realHeight - (int) DisplayUtil.dp2px(20, LauncherActivity.this);
             updateTime();
-            register();
         } else rootView = getLayoutInflater().inflate(R.layout.cell_layout, null);
         RecyclerView recyclerView = rootView.findViewById(R.id.cell_list);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
@@ -193,15 +190,18 @@ public class LauncherActivity extends BaseActivity {
             public void convert(SimpleViewHolder holder, AppInfo item, int position) {
                 holder.setText(R.id.name, item.label);
                 holder.setImageResource(R.id.icon, item.icon);
-                holder.itemView.setLayoutParams(new ViewGroup.LayoutParams(width, height));
+                holder.itemView.setLayoutParams(new ViewGroup.LayoutParams(DisplayUtil.realWidh, DisplayUtil.realHeight));
                 holder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         if (item.type == LoadAppUtils.ALL_APP_TYPE) {
-                            getSupportFragmentManager().beginTransaction().add(R.id.fragment_layout, AllAppFragment.getFragment(null)).commitNow();
-
-                        } else if (item.type == LoadAppUtils.ADD_TYPE) {
-
+                            allAppFragment = AllAppFragment.getFragment(LoadAppUtils.ALL_APP_TYPE);
+                            getSupportFragmentManager().beginTransaction().add(R.id.fragment_layout, allAppFragment).commitNow();
+                            addAppFragmentListener();
+                        } else if (item.type == LoadAppUtils.ADD_APP_TYPE) {
+                            allAppFragment = AllAppFragment.getFragment(LoadAppUtils.ADD_APP_TYPE);
+                            getSupportFragmentManager().beginTransaction().add(R.id.fragment_layout, allAppFragment).commitNow();
+                            addAppFragmentListener();
                         } else {
                             Intent intent = new Intent();
                             intent.setClassName(item.packageName, item.appName);
@@ -250,12 +250,17 @@ public class LauncherActivity extends BaseActivity {
         mLocationClient.startLocation();
     }
 
-    private void register(){
-        IntentFilter filter = new IntentFilter(Intent.ACTION_TIME_TICK);
+    private void register() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_TIME_TICK);
+        filter.addAction("com.huatu.tiger.app.change");
+        filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         registerReceiver(mReceiver, filter);
     }
 
-    private void updateTime(){
+    private void updateTime() {
+        if (mTimeTv == null)
+            return;
         String timeStr = DateTimeUtil.getInstance().getCurrentTimeHHMM();
         mTimeTv.setText(timeStr);
         String dateStr = DateTimeUtil.getInstance().getCurrentDate() + " " + DateTimeUtil.getInstance().getCurrentWeekDay(0);
@@ -263,22 +268,63 @@ public class LauncherActivity extends BaseActivity {
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        static final String SYSTEM_REASON = "reason";
+        static final String SYSTEM_HOME_KEY = "homekey";// home key
+        static final String SYSTEM_RECENT_APPS = "recentapps";// long home key
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(Intent.ACTION_TIME_TICK.equals(action)){
+            Log.e("Launcherss", action);
+            if (action.equals(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)) {
+                String reason = intent.getStringExtra(SYSTEM_REASON);
+                if (SYSTEM_HOME_KEY.equals(reason)) {
+                    Log.d("Launcherss", "--->" + SYSTEM_HOME_KEY); //捕获到Home键
+                } else if (SYSTEM_RECENT_APPS.equals(reason)) {
+                    Log.d("Launcherss", "--->" + SYSTEM_RECENT_APPS); //捕获到最近打开的Activity
+                }
+
+            } else if (Intent.ACTION_TIME_TICK.equals(action)) {
                 updateTime();
+            } else if ("com.huatu.tiger.app.change".equals(action)) {
+                if(allAppFragment != null)
+                LoadAppUtils.getInstance(context).getAllNewApp().observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<List<AppInfo>>() {
+                    @Override
+                    public void accept(List<AppInfo> appInfos) throws Exception {
+                        allAppFragment.updateInfos(appInfos);
+                    }
+                });
+                LoadAppUtils.getInstance(context).mDefaltInfos = null;
+                loadApps();
             }
         }
     };
+
+    private void addAppFragmentListener() {
+        allAppFragment.setAppFragmentListenner(new AllAppFragment.AppFragmentListenner() {
+            @Override
+            public void onAppAdded(AppInfo info) {
+                LoadAppUtils.getInstance(LauncherActivity.this).mDefaltInfos = null;
+                loadApps();
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == 1001 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            loadApps();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         try {
             unregisterReceiver(mReceiver);
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
     }
+
 }
