@@ -45,6 +45,10 @@ public abstract class SimpleCommonRVAdapter<T> extends RecyclerView.Adapter {
         notifyDataSetChanged();
     }
 
+    public List<T> getSelected(){
+        return new ArrayList<>();
+    }
+
     public List<T> getData() {
         return mData;
     }

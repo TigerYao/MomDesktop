@@ -25,7 +25,7 @@ public class AppInfo implements Serializable {
     @Ignore
     public boolean isDefalut;
     @Ignore
-    public boolean isAppWidget;
+    public boolean isSelect;
 
     @Override
     public String toString() {
@@ -36,7 +36,7 @@ public class AppInfo implements Serializable {
                 ", icon=" + icon +
                 ", isSystem=" + isSystem +
                 ", isDefalut=" + isDefalut +
-                ", isAppWidget=" + isAppWidget +
+                ", isAppWidget=" + isSelect +
                 '}';
     }
 

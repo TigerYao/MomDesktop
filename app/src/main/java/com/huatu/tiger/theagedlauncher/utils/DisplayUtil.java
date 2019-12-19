@@ -185,7 +185,7 @@ public class DisplayUtil {
     /**
      * 动态权限
      */
-    public static void addPermissByPermissionList(Activity activity, String[] permissions, int request) {
+    public static boolean addPermissByPermissionList(Activity activity, String[] permissions, int request) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {   //Android 6.0开始的动态权限，这里进行版本判断
             ArrayList<String> mPermissionList = new ArrayList<>();
             for (int i = 0; i < permissions.length; i++) {
@@ -195,13 +195,17 @@ public class DisplayUtil {
                 }
             }
             if (mPermissionList.isEmpty()) {  //非初次进入App且已授权
-                Toast.makeText(activity, "已授权", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "已授权", Toast.LENGTH_SHORT).show();
+                return true;
             } else {
                 //请求权限方法
                 String[] permissionsNew = mPermissionList.toArray(new String[mPermissionList.size()]);//将List转为数组
                 ActivityCompat.requestPermissions(activity, permissionsNew, request); //这个触发下面onRequestPermissionsResult这个回调
+                return false;
             }
         }
+
+        return true;
     }
 
 }

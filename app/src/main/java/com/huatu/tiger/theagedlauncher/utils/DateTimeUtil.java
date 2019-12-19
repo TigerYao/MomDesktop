@@ -8,9 +8,7 @@ import java.util.Locale;
 public class DateTimeUtil {
     private static DateTimeUtil instance;
 
-    private DateTimeUtil() {
-    }
-
+    private DateTimeUtil() {}
 
     public static DateTimeUtil getInstance() {
         if (instance == null) {
@@ -18,7 +16,6 @@ public class DateTimeUtil {
         }
         return instance;
     }
-
 
     //获取系统当前日期时间
     public String getCurrentDateTime() {
@@ -28,7 +25,6 @@ public class DateTimeUtil {
         return curDate;
     }
 
-
     //获取系统当前日期
     public String getCurrentDate() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy年MM月dd日");
@@ -36,7 +32,6 @@ public class DateTimeUtil {
         String curDate = formatter.format(date);
         return curDate;
     }
-
 
     //获取系统当前日期(英文格式)
     public String getCurrentDateEnglish() {
@@ -46,7 +41,6 @@ public class DateTimeUtil {
         return curDate;
     }
 
-
     //获取系统当前时间
     public String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
@@ -55,7 +49,6 @@ public class DateTimeUtil {
         return curDate;
     }
 
-
     //获取系统当前时间
     public String getCurrentTimeHHMM() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
@@ -63,7 +56,6 @@ public class DateTimeUtil {
         String curDate = formatter.format(date);
         return curDate;
     }
-
 
     //获取系统当前是星期几
     public String getCurrentWeekDay(int type) {
